@@ -1,0 +1,195 @@
+---
+title: "projectgeneral"
+output: html_document
+---
+
+## Domain specifity of collocations in Russian academic texts
+
+####Trigrams (complete corpus list, sample size=50000)
+```{r message=FALSE, warning=FALSE}
+library(dplyr)
+library(stats)
+library(ggplot2)
+library(readxl)
+library(knitr)
+```
+
+```{r echo=FALSE}
+tri=read.csv('trigrams.csv')
+tri_samp<-sample_n(tri, 50000)
+summary(tri_samp)
+str(tri_samp)
+```
+
+```{r echo=FALSE}
+ks.test(unique(tri_samp$t.score), 'pnorm', mean(unique(tri_samp$t.score)), sd(unique(tri_samp$t.score)))
+ks.test(unique(tri_samp$likelihood.ratio), 'pnorm', mean(unique(tri_samp$likelihood.ratio)), sd(unique(tri_samp$likelihood.ratio)))
+ks.test(unique(tri_samp$pmi), 'pnorm', mean(unique(tri_samp$pmi)),
+sd(unique(tri_samp$pmi)))
+```
+
+
+```{r echo=FALSE}
+cor.test(tri_samp$frequency, tri_samp$pmi, method = 'kendall')
+cor.test(tri_samp$frequency, tri_samp$t.score, method = 'kendall')
+cor.test(tri_samp$frequency, tri_samp$likelihood.ratio, method = 'kendall')
+```
+
+
+```{r echo=FALSE}
+lin_model3<-lm(tri_samp$frequency~tri_samp$pmi+tri_samp$t.score+tri_samp$likelihood.ratio)
+summary(lin_model3)
+```
+
+
+```{r echo=FALSE}
+plot(tri_samp$frequency, fitted(lin_model3))
+```
+
+####Fivegrams (complete corpus list, sample size=50000)
+
+```{r echo=FALSE}
+five=read.csv('fivegrams.csv')
+five_samp<-sample_n(tri, 50000)
+summary(five_samp)
+str(five_samp)
+```
+
+
+```{r echo=FALSE}
+ks.test(unique(five_samp$t.score), 'pnorm', mean(unique(five_samp$t.score)), sd(unique(five_samp$t.score)))
+ks.test(unique(five_samp$likelihood.ratio), 'pnorm', mean(unique(five_samp$likelihood.ratio)), sd(unique(five_samp$likelihood.ratio)))
+ks.test(unique(five_samp$pmi), 'pnorm', mean(unique(five_samp$pmi)),
+sd(unique(five_samp$pmi)))
+```
+
+
+```{r echo=FALSE}
+cor.test(five_samp$frequency, five_samp$pmi, method = 'kendall')
+cor.test(five_samp$frequency, five_samp$t.score, method = 'kendall')
+cor.test(five_samp$frequency, five_samp$likelihood.ratio, method = 'kendall')
+```
+
+```{r echo=FALSE}
+lin_model5<-lm(five_samp$frequency~five_samp$pmi+five_samp$t.score+five_samp$likelihood.ratio)
+summary(lin_model5)
+```
+
+
+```{r echo=FALSE}
+plot(five_samp$frequency, fitted(lin_model5))
+```
+
+```{r echo=FALSE, include=FALSE}
+
+percentilerank<-function(x){
+     rx<-rle(sort(x))
+     smaller<-cumsum(c(0, rx$lengths))[seq(length(rx$lengths))]
+     larger<-rev(cumsum(c(0, rev(rx$lengths))))[-1]
+     rxpr<-smaller/(smaller+larger)
+     rxpr[match(x, rx$values)]
+}
+
+perc_pmi3<-percentilerank(tri$pmi)
+perc_tscore3<-percentilerank(tri$t.score)
+perc_lr3<-percentilerank(tri$likelihood.ratio)
+
+tri$perc_pmi<-perc_pmi3
+tri$perc_ts<-perc_tscore3
+tri$perc_lr<-perc_lr3
+
+perc13<-tri[which(tri$perc_pmi>=0.75 & tri$perc_ts>=0.75 & tri$perc_lr>=0.75),]
+write.csv(perc13, 'perc13.csv')
+
+perc_pmi5<-percentilerank(five$pmi)
+perc_tscore5<-percentilerank(five$t.score)
+perc_lr5<-percentilerank(five$likelihood.ratio)
+
+five$perc_pmi<-perc_pmi5
+five$perc_ts<-perc_tscore5
+five$perc_lr<-perc_lr5
+
+perc15<-five[which(five$perc_pmi>=0.75 & five$perc_ts>=0.75 & five$perc_lr>=0.75),]
+write.csv(perc15, 'perc15.csv')
+
+hist_trigrams=read_excel('history_collocation_counts.xlsx', sheet=3)
+hist_fivegrams=read_excel('history_collocation_counts.xlsx', sheet=5)
+
+law_trigrams=read_excel('law_collocation_counts.xlsx', sheet=3)
+law_fivegrams=read_excel('law_collocation_counts.xlsx', sheet=5)
+
+ling_trigrams=read_excel('linguistics_collocation_counts.xlsx', sheet=3)
+ling_fivegrams=read_excel('linguistics_collocation_counts.xlsx', sheet=5)
+
+ling_trigrams=read_excel('linguistics_collocation_counts.xlsx', sheet=3)
+ling_fivegrams=read_excel('linguistics_collocation_counts.xlsx', sheet=5)
+
+ec_trigrams=read_excel('economics_collocation_counts.xlsx', sheet=3)
+ec_fivegrams=read_excel('economics_collocation_counts.xlsx', sheet=5)
+
+pol_trigrams=read_excel('politology_collocation_counts.xlsx', sheet=3)
+pol_fivegrams=read_excel('politology_collocation_counts.xlsx', sheet=5)
+
+psy_trigrams=read_excel('psychology_and_pedagogics_collocation_counts.xlsx', sheet=3)
+psy_fivegrams=read_excel('psychology_and_pedagogics_collocation_counts.xlsx', sheet=5)
+
+soc_trigrams=read_excel('sociology_collocation_counts.xlsx', sheet=3)
+soc_fivegrams=read_excel('sociology_collocation_counts.xlsx', sheet=5)
+
+top3<-read_excel('perc13ngram.xlsx')
+top5<-read_excel('perc15ngram.xlsx')
+
+hist_top3<-intersect(hist_trigrams$ngram, top3$ngram)
+law_top3<-intersect(law_trigrams$ngram, top3$ngram)
+ling_top3<-intersect(ling_trigrams$ngram, top3$ngram)
+ec_top3<-intersect(ec_trigrams$ngram, top3$ngram)
+pol_top3<-intersect(pol_trigrams$ngram, top3$ngram)
+psy_top3<-intersect(psy_trigrams$ngram, top3$ngram)
+soc_top3<-intersect(soc_trigrams$ngram, top3$ngram)
+
+hist_top5<-intersect(hist_fivegrams$ngram, top5$ngram)
+law_top5<-intersect(law_fivegrams$ngram, top5$ngram)
+ling_top5<-intersect(ling_fivegrams$ngram, top5$ngram)
+ec_top5<-intersect(ec_fivegrams$ngram, top5$ngram)
+pol_top5<-intersect(pol_fivegrams$ngram, top5$ngram)
+psy_top5<-intersect(psy_fivegrams$ngram, top5$ngram)
+soc_top5<-intersect(soc_fivegrams$ngram, top5$ngram)
+```
+
+```{r echo=FALSE}
+df3=data.frame(group=c('history','law','linguistics','politology','psychology','sociology','economics'), FR=c(length(hist_top3),length(law_top3),length(ling_top3),length(pol_top3),length(psy_top3),length(soc_top3),length(ec_top3)))
+ggplot(df3, mapping=aes(x = group, y=FR)) + geom_col(aes(fill=group))+labs(x='',y='', title='Trigrams')+ guides(fill=guide_legend(title="domain"))
+```
+```{r echo=FALSE}
+df5=data.frame(group=c('history','law','linguistics','politology','psychology','sociology','economics'), FR=c(length(hist_top5),length(law_top5),length(ling_top5),length(pol_top5),length(psy_top5),length(soc_top5),length(ec_top5)))
+ggplot(df5, mapping=aes(x = group, y=FR)) + geom_col(aes(fill=group))+labs(x='',y='', title='Fivegrams')+ guides(fill=guide_legend(title="domain"))
+```
+
+Trigrams:
+```{r echo=FALSE}
+(length(ling_top3)+length(hist_top3)+length(law_top3)+length(pol_top3)+length(psy_top3)+length(soc_top3)+length(ec_top3))-length(top3$id)
+```
+Fivegrams:
+```{r echo=FALSE}
+(length(ling_top5)+length(hist_top5)+length(law_top5)+length(pol_top5)+length(psy_top5)+length(soc_top5)+length(ec_top5))-length(top5$id)
+```
+
+```{r echo=FALSE}
+top3_of_all<-intersect(hist_top3, intersect(law_top3, intersect(ling_top3, intersect(ec_top3, (intersect(pol_top3, (intersect(soc_top3, psy_top3))))))))
+top3_of_all
+```
+
+```{r echo=FALSE}
+t3<-data.frame(row.names=c('history','law','linguistics','economics','politology','psychology','sociology'), history=c(length(intersect(hist_top3,hist_top3)), length(intersect(hist_top3,law_top3)), length(intersect(hist_top3,ling_top3)), length(intersect(hist_top3,ec_top3)), length(intersect(hist_top3,pol_top3)), length(intersect(hist_top3,psy_top3)), length(intersect(hist_top3,soc_top3))), law=c(length(intersect(law_top3,hist_top3)), length(intersect(law_top3,law_top3)), length(intersect(law_top3,ling_top3)), length(intersect(law_top3,ec_top3)), length(intersect(law_top3,pol_top3)), length(intersect(law_top3,psy_top3)), length(intersect(law_top3,soc_top3))), linguistics=c(length(intersect(ling_top3,hist_top3)), length(intersect(ling_top3,law_top3)), length(intersect(ling_top3,ling_top3)), length(intersect(ling_top3,ec_top3)), length(intersect(ling_top3,pol_top3)), length(intersect(ling_top3,psy_top3)), length(intersect(ling_top3,soc_top3))), economics=c(length(intersect(ec_top3,hist_top3)), length(intersect(ec_top3,law_top3)), length(intersect(ec_top3,ling_top3)), length(intersect(ec_top3,ec_top3)), length(intersect(ec_top3,pol_top3)), length(intersect(ec_top3,psy_top3)), length(intersect(ec_top3,soc_top3))), politology=c(length(intersect(pol_top3,hist_top3)), length(intersect(pol_top3,law_top3)), length(intersect(pol_top3,ling_top3)), length(intersect(pol_top3,ec_top3)), length(intersect(pol_top3,pol_top3)), length(intersect(pol_top3,psy_top3)), length(intersect(pol_top3,soc_top3))), psychology=c(length(intersect(psy_top3,hist_top3)), length(intersect(psy_top3,law_top3)), length(intersect(psy_top3,ling_top3)), length(intersect(psy_top3,ec_top3)), length(intersect(psy_top3,pol_top3)), length(intersect(psy_top3,psy_top3)), length(intersect(psy_top3,soc_top3))), sociology=c(length(intersect(soc_top3,hist_top3)), length(intersect(soc_top3,law_top3)), length(intersect(soc_top3,ling_top3)), length(intersect(soc_top3,ec_top3)), length(intersect(soc_top3,pol_top3)), length(intersect(soc_top3,psy_top3)), length(intersect(soc_top3,soc_top3))))
+```
+```{r t3}
+kable(t3, title='Trigrams')
+```
+```{r echo=FALSE}
+t5<-data.frame(row.names=c('history','law','linguistics','economics','politology','psychology','sociology'), history=c(length(intersect(hist_top5,hist_top5)), length(intersect(hist_top5,law_top5)), length(intersect(hist_top5,ling_top5)), length(intersect(hist_top5,ec_top5)), length(intersect(hist_top5,pol_top5)), length(intersect(hist_top5,psy_top5)), length(intersect(hist_top5,soc_top5))), law=c(length(intersect(law_top5,hist_top5)), length(intersect(law_top5,law_top5)), length(intersect(law_top5,ling_top5)), length(intersect(law_top5,ec_top5)), length(intersect(law_top5,pol_top5)), length(intersect(law_top5,psy_top5)), length(intersect(law_top5,soc_top5))), linguistics=c(length(intersect(ling_top5,hist_top5)), length(intersect(ling_top5,law_top5)), length(intersect(ling_top5,ling_top5)), length(intersect(ling_top5,ec_top5)), length(intersect(ling_top5,pol_top5)), length(intersect(ling_top5,psy_top5)), length(intersect(ling_top5,soc_top5))), economics=c(length(intersect(ec_top5,hist_top5)), length(intersect(ec_top5,law_top5)), length(intersect(ec_top5,ling_top5)), length(intersect(ec_top5,ec_top5)), length(intersect(ec_top5,pol_top5)), length(intersect(ec_top5,psy_top5)), length(intersect(ec_top5,soc_top5))), politology=c(length(intersect(pol_top5,hist_top5)), length(intersect(pol_top5,law_top5)), length(intersect(pol_top5,ling_top5)), length(intersect(pol_top5,ec_top5)), length(intersect(pol_top5,pol_top5)), length(intersect(pol_top5,psy_top5)), length(intersect(pol_top5,soc_top5))), psychology=c(length(intersect(psy_top5,hist_top5)), length(intersect(psy_top5,law_top5)), length(intersect(psy_top5,ling_top5)), length(intersect(psy_top5,ec_top5)), length(intersect(psy_top5,pol_top5)), length(intersect(psy_top5,psy_top5)), length(intersect(psy_top5,soc_top5))), sociology=c(length(intersect(soc_top5,hist_top5)), length(intersect(soc_top5,law_top5)), length(intersect(soc_top5,ling_top5)), length(intersect(soc_top5,ec_top5)), length(intersect(soc_top5,pol_top5)), length(intersect(soc_top5,psy_top5)), length(intersect(soc_top5,soc_top5))))
+```
+```{r t5}
+kable(t5, title='Fivegrams')
+```
+
+
