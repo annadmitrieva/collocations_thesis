@@ -1,4 +1,4 @@
-## Thesis name: How idiosyncratic are collocations? Methods of clustering academic speech collocations  
+## Thesis title: How idiosyncratic are collocations? Methods of clustering academic speech collocations  
 
 Repository descriprion:  
 c-value - code for computing C-value  
